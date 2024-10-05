@@ -1,7 +1,7 @@
 {
-  "name": "jay-hacks",
-  "version": "1.0.0-alpha",
-  "description": "Foundry VTT module for Jasons Foundry Hacks",
+  "name": "jay-macros",
+  "version": "1.0.0",
+  "description": "One of Jason's Foundry VTT modules.",
   "scripts": {
     "lint": "npx eslint scripts/",
     "lint-fix": "npx eslint scripts/ --fix",
