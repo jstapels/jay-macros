@@ -39,7 +39,7 @@ const log = (...args) => {
  * @returns 
  */
 const isItemAction = (item) => {
-  if (!item?.system?.activaties?.size) {
+  if (!item?.system?.activities?.size) {
     return game.settings.get(MODULE_ID, SETTING_ACTIVATION_EMPTY);
   }
 
@@ -82,6 +82,7 @@ const tokenSelected = async (token) => {
 
   // Filter to just usable items
   items = items.filter(isItemAction);
+  log('Found items', items);
 
   // Nothing to do.
   if (!items.length) return;
