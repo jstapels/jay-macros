@@ -1,6 +1,6 @@
 const MODULE_ID = 'jay-macros';
 
-// Eventually these should be in a config page.
+// Setting keys
 const SETTING_HOTBAR_PAGE = 'hotbarPage';
 const SETTING_ONLY_GMS = 'onlyGMs';
 const SETTING_ACTIVATION_ACTION = 'action';
@@ -138,7 +138,7 @@ const controlTokenHook = async (token, selected) => {
 };
 
 const initHook = () => {
-  log('Initialization settings');
+  log('Initialize settings');
 
   game.settings.register(MODULE_ID, SETTING_HOTBAR_PAGE, {
     name: game.i18n.localize(`${MODULE_ID}.settings.selectHotbarPage.name`),
@@ -229,6 +229,6 @@ const readyHook = () => {
   Hooks.on('controlToken', controlTokenHook);
 };
 
-Hooks.once('init', () => initHook());
-Hooks.once('ready', () => readyHook());
+Hooks.once('init', initHook);
+Hooks.once('ready', readyHook);
 
