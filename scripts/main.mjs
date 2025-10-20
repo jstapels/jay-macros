@@ -49,7 +49,7 @@ const isItemAction = (item) => {
     .map(([, v]) => v);
   const actionTypes = [...allowedActions];
   return item?.system?.activities?.values()
-    .some((a) => actionTypes.includes(a.activation.type))
+    .some((a) => a?.activation?.type && actionTypes.includes(a.activation.type))
     ?? false;
 };
 
