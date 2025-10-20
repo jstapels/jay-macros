@@ -7,18 +7,19 @@
   transform: translateX(-50%) !important;
   z-index: 70 !important;
   pointer-events: all !important;
-
-  /* Flexbox layout for horizontal buttons */
-  display: flex !important;
-  flex-direction: row !important;
-  gap: 8px;
   padding: 8px;
   background: rgba(20, 20, 30, 0.95) !important;
   border-radius: 5px;
+  user-select: none;
+}
+
+.jay-macros-filter-buttons-wrapper {
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 8px;
   justify-content: center;
   align-items: center;
   flex-wrap: nowrap;
-  user-select: none;
 }
 
 .jay-macros-filter-button {

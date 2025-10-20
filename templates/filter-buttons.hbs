@@ -1,13 +1,13 @@
-{{#if hasItems}}
-{{#each buttons}}
-  <button class="jay-macros-filter-button {{#if isActive}}active{{/if}} {{#if isDisabled}}disabled{{/if}}"
-          data-filter="{{filterId}}"
-          {{#if isDisabled}}disabled{{/if}}>
-    <i class="{{icon}}"></i>
-    <span>{{label}}</span>
-    {{#if count}}
-      <span class="count">({{count}})</span>
-    {{/if}}
-  </button>
-{{/each}}
-{{/if}}
+<div class="jay-macros-filter-buttons-wrapper" style="{{#unless hasItems}}display:none;{{/unless}}">
+  {{#each buttons}}
+    <button class="jay-macros-filter-button {{#if isActive}}active{{/if}} {{#if isDisabled}}disabled{{/if}}"
+            data-filter="{{filterId}}"
+            {{#if isDisabled}}disabled{{/if}}>
+      <i class="{{icon}}"></i>
+      <span>{{label}}</span>
+      {{#if count}}
+        <span class="count">({{count}})</span>
+      {{/if}}
+    </button>
+  {{/each}}
+</div>
