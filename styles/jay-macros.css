@@ -2,14 +2,15 @@
 
 .jay-macros-filter-container {
   display: flex;
+  flex-direction: row;
   gap: 8px;
   padding: 8px;
   background: rgba(0, 0, 0, 0.5);
   border-radius: 5px;
   margin-bottom: 8px;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   position: relative;
   z-index: 100;
   pointer-events: auto;
