@@ -429,9 +429,25 @@ const createFilterContainer = () => {
   container.className = 'jay-macros-filter-container';
   container.style.display = 'none'; // Hidden by default
 
-  // Append directly to document.body (above canvas layers)
-  document.body.appendChild(container);
-  log('Filter container appended to document.body');
+  // Find the hotbar and its parent structure
+  const hotbar = document.getElementById('hotbar');
+  if (!hotbar) {
+    log('ERROR: Could not find hotbar element');
+    return;
+  }
+
+  // Log the parent structure for debugging
+  log('Hotbar parent:', hotbar.parentElement?.id || hotbar.parentElement?.className);
+  log('Hotbar grandparent:', hotbar.parentElement?.parentElement?.id || hotbar.parentElement?.parentElement?.className);
+
+  // Insert into the same parent as the hotbar
+  if (hotbar.parentElement) {
+    hotbar.parentElement.insertBefore(container, hotbar);
+    log('Filter container inserted before hotbar');
+  } else {
+    log('ERROR: Hotbar has no parent element');
+    return;
+  }
 
   // Prevent mouse events from propagating to canvas
   container.addEventListener('mousedown', (event) => {

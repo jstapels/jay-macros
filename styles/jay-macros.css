@@ -7,13 +7,11 @@
   padding: 8px;
   background: rgba(20, 20, 30, 0.95) !important;
   border-radius: 5px;
+  margin-bottom: 8px;
   justify-content: flex-start;
   align-items: center;
   flex-wrap: nowrap;
-  position: fixed !important;
-  bottom: 68px !important;
-  left: 50% !important;
-  transform: translateX(-50%) !important;
+  position: relative !important;
   z-index: 10000 !important;
   pointer-events: all !important;
   user-select: none;
