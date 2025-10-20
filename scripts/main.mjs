@@ -112,15 +112,21 @@ const filterItemsByType = (items, filter) => {
  */
 const createFilterUI = () => {
   if (!game.settings.get(MODULE_ID, SETTING_EXPERIMENTAL_FILTERS)) {
+    log('Experimental filters disabled, skipping UI creation');
     return;
   }
+
+  log('Creating filter UI...');
 
   // Remove existing filter UI if present
   removeFilterUI();
 
   if (!collectedItems.length) {
+    log('No collected items, skipping filter UI');
     return;
   }
+
+  log(`Creating filter UI for ${collectedItems.length} items`);
 
   // Create container for filter buttons
   const container = document.createElement('div');
@@ -159,6 +165,7 @@ const createFilterUI = () => {
     }
 
     button.addEventListener('click', (event) => {
+      log(`Button click event triggered for: ${filter.label}`);
       event.stopPropagation();
       event.preventDefault();
       handleFilterClick(filter.id);
@@ -170,6 +177,9 @@ const createFilterUI = () => {
   const hotbar = document.getElementById('hotbar');
   if (hotbar) {
     hotbar.parentElement.insertBefore(container, hotbar);
+    log(`Filter UI created with ${filters.length} buttons and attached to DOM`);
+  } else {
+    log('ERROR: Could not find hotbar element!');
   }
 
   // Prevent container from propagating clicks to canvas
@@ -196,8 +206,13 @@ const removeFilterUI = () => {
  * @param {string|null} filter the filter to apply
  */
 const handleFilterClick = (filter) => {
+  log(`Filter button clicked: ${filter ?? 'all'}`);
   currentFilter = filter;
-  workQueue = workQueue.then(() => updateMacrosForFilter());
+  log(`Current filter set to: ${currentFilter ?? 'all'}`);
+  workQueue = workQueue.then(() => {
+    log(`Executing updateMacrosForFilter for filter: ${currentFilter ?? 'all'}`);
+    return updateMacrosForFilter();
+  });
 };
 
 /**
