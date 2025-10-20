@@ -108,30 +108,13 @@ const filterItemsByType = (items, filter) => {
 };
 
 /**
- * Create or update the filter button UI above the hotbar.
+ * Build the filter button HTML.
+ * @returns {string} The HTML string for the filter UI
  */
-const createFilterUI = () => {
-  if (!game.settings.get(MODULE_ID, SETTING_EXPERIMENTAL_FILTERS)) {
-    log('Experimental filters disabled, skipping UI creation');
-    return;
-  }
-
-  log('Creating filter UI...');
-
-  // Remove existing filter UI if present
-  removeFilterUI();
-
+const buildFilterHTML = () => {
   if (!collectedItems.length) {
-    log('No collected items, skipping filter UI');
-    return;
+    return '';
   }
-
-  log(`Creating filter UI for ${collectedItems.length} items`);
-
-  // Create container for filter buttons
-  const container = document.createElement('div');
-  container.id = 'jay-macros-filters';
-  container.className = 'jay-macros-filter-container';
 
   // Define filter buttons
   const filters = [
@@ -142,63 +125,28 @@ const createFilterUI = () => {
     { id: 'spell', label: 'Spells', icon: 'fas fa-magic' },
   ];
 
-  // Create buttons
+  let buttonsHTML = '';
+
   for (const filter of filters) {
-    const button = document.createElement('button');
-    button.className = 'jay-macros-filter-button';
-    button.dataset.filter = filter.id ?? 'all';
-    button.innerHTML = `<i class="${filter.icon}"></i> ${filter.label}`;
-
-    if (currentFilter === filter.id) {
-      button.classList.add('active');
-    }
-
-    // Check if there are items for this filter
     const filteredItems = filterItemsByType(collectedItems, filter.id);
     const count = filteredItems.length;
+    const isActive = currentFilter === filter.id;
+    const isDisabled = count === 0;
 
-    if (count === 0) {
-      button.classList.add('disabled');
-      button.disabled = true;
-    } else {
-      button.innerHTML += ` <span class="count">(${count})</span>`;
-    }
+    const activeClass = isActive ? ' active' : '';
+    const disabledClass = isDisabled ? ' disabled' : '';
+    const disabledAttr = isDisabled ? ' disabled' : '';
+    const countText = count > 0 ? ` <span class="count">(${count})</span>` : '';
 
-    button.addEventListener('click', (event) => {
-      log(`Button click event triggered for: ${filter.label}`);
-      event.stopPropagation();
-      event.preventDefault();
-      handleFilterClick(filter.id);
-    });
-    container.appendChild(button);
+    buttonsHTML += `
+      <button class="jay-macros-filter-button${activeClass}${disabledClass}"
+              data-filter="${filter.id ?? 'all'}"${disabledAttr}>
+        <i class="${filter.icon}"></i> ${filter.label}${countText}
+      </button>
+    `;
   }
 
-  // Insert above the hotbar
-  const hotbar = document.getElementById('hotbar');
-  if (hotbar) {
-    hotbar.parentElement.insertBefore(container, hotbar);
-    log(`Filter UI created with ${filters.length} buttons and attached to DOM`);
-  } else {
-    log('ERROR: Could not find hotbar element!');
-  }
-
-  // Prevent container from propagating clicks to canvas
-  container.addEventListener('mousedown', (event) => {
-    event.stopPropagation();
-  });
-  container.addEventListener('mouseup', (event) => {
-    event.stopPropagation();
-  });
-};
-
-/**
- * Remove the filter UI.
- */
-const removeFilterUI = () => {
-  const existingUI = document.getElementById('jay-macros-filters');
-  if (existingUI) {
-    existingUI.remove();
-  }
+  return `<div id="jay-macros-filters" class="jay-macros-filter-container">${buttonsHTML}</div>`;
 };
 
 /**
@@ -224,7 +172,7 @@ const updateMacrosForFilter = async () => {
 
   if (!collectedItems.length) {
     log('No items to filter');
-    removeFilterUI();
+    ui.hotbar.render();
     return;
   }
 
@@ -234,7 +182,7 @@ const updateMacrosForFilter = async () => {
 
   if (!filteredItems.length) {
     log('No items match current filter');
-    createFilterUI(); // Update UI to show active filter
+    ui.hotbar.render(); // Update UI to show active filter
     return;
   }
 
@@ -248,7 +196,7 @@ const updateMacrosForFilter = async () => {
 
   if (!macroData.length) {
     log('No free slots available');
-    createFilterUI(); // Update UI to show active filter
+    ui.hotbar.render(); // Update UI to show active filter
     return;
   }
 
@@ -266,8 +214,8 @@ const updateMacrosForFilter = async () => {
   log('Updating hotbar');
   await game.user.update({ hotbar: update }, { diff: false, recursive: false, noHook: true });
 
-  // Update filter UI to reflect current state
-  createFilterUI();
+  // Trigger hotbar re-render to update filter UI
+  ui.hotbar.render();
 };
 
 /**
@@ -282,7 +230,7 @@ const updateMacrosForSelectedTokens = async () => {
     collectedItems = [];
     currentFilter = null;
     await destroyMacros();
-    removeFilterUI();
+    ui.hotbar.render();
     return;
   }
 
@@ -322,14 +270,13 @@ const updateMacrosForSelectedTokens = async () => {
     log('No usable items found');
     currentFilter = null;
     await destroyMacros();
-    removeFilterUI();
+    ui.hotbar.render();
     return;
   }
 
   // If experimental filters are enabled, create UI and use filter logic
   if (game.settings.get(MODULE_ID, SETTING_EXPERIMENTAL_FILTERS)) {
     log('Using experimental filter mode');
-    createFilterUI();
     await updateMacrosForFilter();
     return;
   }
@@ -505,6 +452,43 @@ const initHook = () => {
 const readyHook = () => {
   log('Ready');
   Hooks.on('controlToken', controlTokenHook);
+  Hooks.on('renderHotbar', renderHotbarHook);
+};
+
+/**
+ * Hook for when the hotbar renders - inject filter UI.
+ */
+const renderHotbarHook = (app, html, data) => {
+  if (!game.settings.get(MODULE_ID, SETTING_EXPERIMENTAL_FILTERS)) {
+    return;
+  }
+
+  log('renderHotbar hook triggered');
+
+  // Remove any existing filter UI
+  html.find('#jay-macros-filters').remove();
+
+  // Build and inject new filter UI if we have items
+  const filterHTML = buildFilterHTML();
+  if (filterHTML) {
+    log('Injecting filter UI into hotbar');
+    html.before(filterHTML);
+
+    // Attach click handlers using jQuery
+    html.prev('#jay-macros-filters').find('.jay-macros-filter-button').on('click', function(event) {
+      event.stopPropagation();
+      event.preventDefault();
+      const filterValue = $(this).data('filter');
+      const filter = filterValue === 'all' ? null : filterValue;
+      log(`Filter button clicked: ${filter ?? 'all'}`);
+      handleFilterClick(filter);
+    });
+
+    // Prevent mouse events from propagating to canvas
+    html.prev('#jay-macros-filters').on('mousedown mouseup', function(event) {
+      event.stopPropagation();
+    });
+  }
 };
 
 Hooks.once('init', initHook);
