@@ -504,7 +504,22 @@ const updateFilterUI = () => {
 
   // Attach click handlers to all buttons
   const buttons = container.querySelectorAll('.jay-macros-filter-button');
-  buttons.forEach(button => {
+  log(`Attaching event listeners to ${buttons.length} buttons`);
+
+  buttons.forEach((button, index) => {
+    // Log button info for debugging
+    log(`Button ${index}: ${button.dataset.filter}, disabled: ${button.disabled}`);
+
+    // Add multiple event types for better debugging
+    button.addEventListener('mouseenter', (event) => {
+      log(`Mouse entered button: ${event.currentTarget.dataset.filter}`);
+    });
+
+    button.addEventListener('mousedown', (event) => {
+      event.stopPropagation();
+      log(`Mouse down on button: ${event.currentTarget.dataset.filter}`);
+    });
+
     button.addEventListener('click', (event) => {
       event.stopPropagation();
       event.preventDefault();
@@ -514,6 +529,8 @@ const updateFilterUI = () => {
       handleFilterClick(filter);
     });
   });
+
+  log('Filter UI update complete');
 };
 
 Hooks.once('init', initHook);

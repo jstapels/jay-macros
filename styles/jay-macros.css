@@ -5,15 +5,15 @@
   flex-direction: row;
   gap: 8px;
   padding: 8px;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(20, 20, 30, 0.95) !important;
   border-radius: 5px;
   margin-bottom: 8px;
   justify-content: flex-start;
   align-items: center;
   flex-wrap: nowrap;
-  position: relative;
-  z-index: 1000;
-  pointer-events: all;
+  position: relative !important;
+  z-index: 10000 !important;
+  pointer-events: all !important;
   user-select: none;
 }
 
@@ -22,30 +22,30 @@
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  background: linear-gradient(135deg, rgba(255, 100, 100, 0.3), rgba(100, 100, 255, 0.3));
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  background: linear-gradient(135deg, rgba(80, 50, 50, 0.95), rgba(50, 50, 80, 0.95)) !important;
+  border: 2px solid rgba(255, 255, 255, 0.5);
   border-radius: 4px;
-  color: #ffffff;
+  color: #ffffff !important;
   font-weight: bold;
   font-size: 13px;
-  cursor: pointer;
+  cursor: pointer !important;
   transition: all 0.2s ease;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-  pointer-events: auto;
+  pointer-events: all !important;
   user-select: none;
-  position: relative;
-  z-index: 101;
+  position: relative !important;
+  z-index: 10001 !important;
 }
 
 .jay-macros-filter-button:hover:not(.disabled) {
-  background: linear-gradient(135deg, rgba(255, 120, 120, 0.5), rgba(120, 120, 255, 0.5));
-  border-color: rgba(255, 255, 255, 0.5);
+  background: linear-gradient(135deg, rgba(120, 80, 80, 0.95), rgba(80, 80, 120, 0.95)) !important;
+  border-color: rgba(255, 255, 255, 0.7);
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
 }
 
 .jay-macros-filter-button.active {
-  background: linear-gradient(135deg, rgba(255, 200, 100, 0.7), rgba(255, 150, 50, 0.7));
+  background: linear-gradient(135deg, rgba(200, 150, 80, 0.95), rgba(180, 120, 50, 0.95)) !important;
   border-color: rgba(255, 215, 0, 0.8);
   box-shadow: 0 4px 12px rgba(255, 215, 0, 0.5);
 }
