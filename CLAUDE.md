@@ -207,6 +207,6 @@ All APIs are compatible with Foundry v13:
 ---
 
 **Last Updated**: 2025-10-20
-**Module Version**: 1.0.5
+**Module Version**: 1.0.6
 **Foundry Compatibility**: v13
 **D&D 5e Compatibility**: v5.0
