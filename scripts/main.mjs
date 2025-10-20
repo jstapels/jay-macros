@@ -465,32 +465,42 @@ const renderHotbarHook = (app, html, data) => {
 
   log('renderHotbar hook triggered');
 
-  // Wrap html in jQuery (Foundry v13 uses ApplicationV2, which provides vanilla DOM)
-  const $html = $(html);
-
   // Remove any existing filter UI
-  $html.find('#jay-macros-filters').remove();
+  const existingFilter = html.querySelector('#jay-macros-filters');
+  if (existingFilter) {
+    existingFilter.remove();
+  }
 
   // Build and inject new filter UI if we have items
   const filterHTML = buildFilterHTML();
   if (filterHTML) {
     log('Injecting filter UI into hotbar');
-    $html.before(filterHTML);
+    html.insertAdjacentHTML('beforebegin', filterHTML);
 
-    // Attach click handlers using jQuery
-    $html.prev('#jay-macros-filters').find('.jay-macros-filter-button').on('click', function(event) {
-      event.stopPropagation();
-      event.preventDefault();
-      const filterValue = $(this).data('filter');
-      const filter = filterValue === 'all' ? null : filterValue;
-      log(`Filter button clicked: ${filter ?? 'all'}`);
-      handleFilterClick(filter);
-    });
+    // Get the newly inserted filter container
+    const filterContainer = html.previousElementSibling;
+    if (filterContainer && filterContainer.id === 'jay-macros-filters') {
+      // Attach click handlers to all filter buttons
+      const buttons = filterContainer.querySelectorAll('.jay-macros-filter-button');
+      buttons.forEach(button => {
+        button.addEventListener('click', (event) => {
+          event.stopPropagation();
+          event.preventDefault();
+          const filterValue = event.currentTarget.dataset.filter;
+          const filter = filterValue === 'all' ? null : filterValue;
+          log(`Filter button clicked: ${filter ?? 'all'}`);
+          handleFilterClick(filter);
+        });
+      });
 
-    // Prevent mouse events from propagating to canvas
-    $html.prev('#jay-macros-filters').on('mousedown mouseup', function(event) {
-      event.stopPropagation();
-    });
+      // Prevent mouse events from propagating to canvas
+      filterContainer.addEventListener('mousedown', (event) => {
+        event.stopPropagation();
+      });
+      filterContainer.addEventListener('mouseup', (event) => {
+        event.stopPropagation();
+      });
+    }
   }
 };
 
