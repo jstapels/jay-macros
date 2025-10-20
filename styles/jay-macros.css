@@ -1,0 +1,60 @@
+/* Jay Macros - Filter UI Styles */
+
+.jay-macros-filter-container {
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 5px;
+  margin-bottom: 8px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.jay-macros-filter-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, rgba(255, 100, 100, 0.3), rgba(100, 100, 255, 0.3));
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  color: #ffffff;
+  font-weight: bold;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.jay-macros-filter-button:hover:not(.disabled) {
+  background: linear-gradient(135deg, rgba(255, 120, 120, 0.5), rgba(120, 120, 255, 0.5));
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+.jay-macros-filter-button.active {
+  background: linear-gradient(135deg, rgba(255, 200, 100, 0.7), rgba(255, 150, 50, 0.7));
+  border-color: rgba(255, 215, 0, 0.8);
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.5);
+}
+
+.jay-macros-filter-button.disabled {
+  background: rgba(80, 80, 80, 0.3);
+  border-color: rgba(100, 100, 100, 0.3);
+  color: rgba(255, 255, 255, 0.4);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.jay-macros-filter-button i {
+  font-size: 14px;
+}
+
+.jay-macros-filter-button .count {
+  font-size: 11px;
+  opacity: 0.9;
+  font-weight: normal;
+}

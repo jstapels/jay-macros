@@ -32,6 +32,10 @@
             "activationEmpty": {
                 "name": "Empty Type",
                 "hint": "Allow items that have no activation cost?"
+            },
+            "experimentalFilters": {
+                "name": "Experimental: Action Filters",
+                "hint": "Enable experimental filter buttons above the hotbar to group actions by type (Actions, Bonus Actions, Reactions, Spells). Requires reload."
             }
         }
     }

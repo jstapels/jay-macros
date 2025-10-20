@@ -2,7 +2,7 @@
   "id": "jay-macros",
   "title": "Jay Macros",
   "description": "Foundry VTT module that automatically creates macros for the selected token.",
-  "version": "1.0.7",
+  "version": "1.1.0",
   "compatibility": {
     "minimum": "12",
     "verified": "13"
@@ -21,6 +21,9 @@
   },
   "esmodules": [
     "scripts/main.mjs"
+  ],
+  "styles": [
+    "styles/jay-macros.css"
   ],
   "languages": [
     {
