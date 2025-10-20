@@ -1,9 +1,9 @@
 const MODULE_ID = 'jay-macros';
 
 /**
- * Application for the filter UI buttons
+ * Application for the filter UI buttons (V2Application)
  */
-export class FilterApplication extends Application {
+export class FilterApplication extends foundry.applications.api.ApplicationV2 {
   constructor(options = {}) {
     super(options);
     this.collectedItems = [];
@@ -11,46 +11,37 @@ export class FilterApplication extends Application {
     console.log(`${MODULE_ID} | FilterApplication constructor called`);
   }
 
-  static get defaultOptions() {
-    const options = foundry.utils.mergeObject(super.defaultOptions, {
-      id: 'jay-macros-filters',
+  static DEFAULT_OPTIONS = {
+    id: 'jay-macros-filters',
+    tag: 'div',
+    window: {
+      frame: false,
+      positioned: false,
+    },
+    position: {},
+    classes: ['jay-macros-filter-container'],
+  };
+
+  static PARTS = {
+    buttons: {
       template: 'modules/jay-macros/templates/filter-buttons.hbs',
-      popOut: false,
-      minimizable: false,
-      resizable: false,
-      classes: ['jay-macros-filter-container']
-    });
-    console.log(`${MODULE_ID} | FilterApplication defaultOptions:`, options);
-    return options;
-  }
-
-  async _renderInner(data) {
-    console.log(`${MODULE_ID} | FilterApplication _renderInner called with data:`, data);
-    try {
-      const html = await super._renderInner(data);
-      console.log(`${MODULE_ID} | FilterApplication template rendered, HTML:`, html);
-      return html;
-    } catch (error) {
-      console.error(`${MODULE_ID} | Error rendering template:`, error);
-      throw error;
     }
-  }
+  };
 
-  _injectHTML(html) {
-    console.log(`${MODULE_ID} | FilterApplication _injectHTML called`);
+  _onRender(context, options) {
+    super._onRender(context, options);
+    console.log(`${MODULE_ID} | FilterApplication rendered`);
+
+    // Position the element above the hotbar
     const hotbar = document.getElementById('hotbar');
-    if (hotbar && hotbar.parentElement) {
-      hotbar.parentElement.insertBefore(html[0], hotbar);
-      console.log(`${MODULE_ID} | FilterApplication HTML injected before hotbar`);
-    } else {
-      console.error(`${MODULE_ID} | Could not find hotbar for injection`);
-      super._injectHTML(html);
+    if (hotbar && this.element) {
+      hotbar.parentElement.insertBefore(this.element, hotbar);
+      console.log(`${MODULE_ID} | FilterApplication positioned before hotbar`);
     }
-    this._element = html;
   }
 
-  getData(options = {}) {
-    console.log(`${MODULE_ID} | FilterApplication getData called, collectedItems:`, this.collectedItems.length);
+  async _prepareContext(options) {
+    console.log(`${MODULE_ID} | FilterApplication _prepareContext called, collectedItems:`, this.collectedItems.length);
 
     const filters = [
       { id: null, label: 'All', icon: 'fas fa-list' },
@@ -72,13 +63,13 @@ export class FilterApplication extends Application {
       };
     });
 
-    const data = {
+    const context = {
       buttons,
       hasItems: this.collectedItems.length > 0
     };
 
-    console.log(`${MODULE_ID} | FilterApplication getData returning:`, data);
-    return data;
+    console.log(`${MODULE_ID} | FilterApplication _prepareContext returning:`, context);
+    return context;
   }
 
   _filterItems(filter) {
@@ -95,14 +86,19 @@ export class FilterApplication extends Application {
     });
   }
 
-  activateListeners(html) {
-    super.activateListeners(html);
-    console.log(`${MODULE_ID} | FilterApplication activateListeners called, html:`, html);
+  _attachPartListeners(partId, htmlElement, options) {
+    super._attachPartListeners(partId, htmlElement, options);
 
-    const buttons = html.find('.jay-macros-filter-button');
-    console.log(`${MODULE_ID} | Found ${buttons.length} filter buttons`);
+    if (partId === 'buttons') {
+      console.log(`${MODULE_ID} | FilterApplication attaching listeners to buttons part`);
 
-    buttons.on('click', this._onFilterClick.bind(this));
+      const buttons = htmlElement.querySelectorAll('.jay-macros-filter-button');
+      console.log(`${MODULE_ID} | Found ${buttons.length} filter buttons`);
+
+      buttons.forEach(button => {
+        button.addEventListener('click', this._onFilterClick.bind(this));
+      });
+    }
   }
 
   async _onFilterClick(event) {
