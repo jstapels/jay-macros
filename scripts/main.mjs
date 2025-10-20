@@ -158,7 +158,11 @@ const createFilterUI = () => {
       button.innerHTML += ` <span class="count">(${count})</span>`;
     }
 
-    button.addEventListener('click', () => handleFilterClick(filter.id));
+    button.addEventListener('click', (event) => {
+      event.stopPropagation();
+      event.preventDefault();
+      handleFilterClick(filter.id);
+    });
     container.appendChild(button);
   }
 
@@ -167,6 +171,14 @@ const createFilterUI = () => {
   if (hotbar) {
     hotbar.parentElement.insertBefore(container, hotbar);
   }
+
+  // Prevent container from propagating clicks to canvas
+  container.addEventListener('mousedown', (event) => {
+    event.stopPropagation();
+  });
+  container.addEventListener('mouseup', (event) => {
+    event.stopPropagation();
+  });
 };
 
 /**
