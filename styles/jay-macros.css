@@ -1,5 +1,14 @@
 /* Jay Macros - Filter UI Styles */
 
+#jay-macros-filters {
+  position: fixed !important;
+  bottom: 70px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  z-index: 100 !important;
+  pointer-events: all !important;
+}
+
 .jay-macros-filter-container {
   display: flex;
   flex-direction: row;
@@ -7,12 +16,11 @@
   padding: 8px;
   background: rgba(20, 20, 30, 0.95) !important;
   border-radius: 5px;
-  margin-bottom: 8px;
   justify-content: flex-start;
   align-items: center;
   flex-wrap: nowrap;
   position: relative !important;
-  z-index: 10000 !important;
+  z-index: 100 !important;
   pointer-events: all !important;
   user-select: none;
 }

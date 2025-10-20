@@ -1,0 +1,12 @@
+{{#if hasItems}}
+  {{#each buttons}}
+    <button class="jay-macros-filter-button {{#if isActive}}active{{/if}} {{#if isDisabled}}disabled{{/if}}"
+            data-filter="{{filterId}}"
+            {{#if isDisabled}}disabled{{/if}}>
+      <i class="{{icon}}"></i> {{label}}
+      {{#if count}}
+        <span class="count">({{count}})</span>
+      {{/if}}
+    </button>
+  {{/each}}
+{{/if}}
