@@ -32,14 +32,9 @@ export class FilterApplication extends foundry.applications.api.HandlebarsApplic
 
   _onRender(context, options) {
     super._onRender(context, options);
-    console.log(`${MODULE_ID} | FilterApplication rendered`);
-
-    // Position the element above the hotbar
-    const hotbar = document.getElementById('hotbar');
-    if (hotbar && this.element) {
-      hotbar.parentElement.insertBefore(this.element, hotbar);
-      console.log(`${MODULE_ID} | FilterApplication positioned before hotbar`);
-    }
+    console.log(`${MODULE_ID} | FilterApplication rendered, element:`, this.element);
+    console.log(`${MODULE_ID} | Element classes:`, this.element?.className);
+    console.log(`${MODULE_ID} | Element style:`, this.element?.style.cssText);
   }
 
   async _prepareContext(options) {
@@ -91,14 +86,22 @@ export class FilterApplication extends foundry.applications.api.HandlebarsApplic
   _attachPartListeners(partId, htmlElement, options) {
     super._attachPartListeners(partId, htmlElement, options);
 
+    console.log(`${MODULE_ID} | _attachPartListeners called with partId:`, partId);
+    console.log(`${MODULE_ID} | htmlElement:`, htmlElement);
+
     if (partId === 'buttons') {
       console.log(`${MODULE_ID} | FilterApplication attaching listeners to buttons part`);
 
       const buttons = htmlElement.querySelectorAll('.jay-macros-filter-button');
-      console.log(`${MODULE_ID} | Found ${buttons.length} filter buttons`);
+      console.log(`${MODULE_ID} | Found ${buttons.length} filter buttons`, buttons);
 
-      buttons.forEach(button => {
+      buttons.forEach((button, index) => {
+        console.log(`${MODULE_ID} | Attaching click listener to button ${index}:`, button);
         button.addEventListener('click', this._onFilterClick.bind(this));
+        // Also add a test listener to verify events work
+        button.addEventListener('click', () => {
+          console.log(`${MODULE_ID} | BUTTON ${index} CLICKED!`);
+        });
       });
     }
   }

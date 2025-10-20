@@ -5,7 +5,7 @@
   bottom: 70px !important;
   left: 50% !important;
   transform: translateX(-50%) !important;
-  z-index: 70 !important;
+  z-index: 1000 !important;
   pointer-events: all !important;
   padding: 8px;
   background: rgba(20, 20, 30, 0.95) !important;
@@ -20,6 +20,9 @@
   justify-content: center;
   align-items: center;
   flex-wrap: nowrap;
+  pointer-events: all !important;
+  z-index: 1001 !important;
+  position: relative !important;
 }
 
 .jay-macros-filter-button {
