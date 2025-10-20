@@ -19,10 +19,11 @@ const ACTION_LOOKUP = new Map([
 ]);
 
 let workQueue = Promise.resolve();
+let updateTimeout = null;
 
 /**
  * Log to the console.
- * 
+ *
  * @param  {...any} args log parameters
  */
 const log = (...args) => {
@@ -63,37 +64,69 @@ const createMacroData = (item) => {
   };
 };
 
-const tokenSelected = async (token) => {
-  log(`Token ${token.name} selected.`);
+/**
+ * Process all currently selected tokens and update the macro bar.
+ * This handles multiple selected tokens at once to avoid timing conflicts.
+ */
+const updateMacrosForSelectedTokens = async () => {
+  const selectedTokens = canvas.tokens?.controlled ?? [];
 
-  let items = Array.from(token.actor?.items?.values() ?? []);
-
-  // See if favorites are available
-  if (token.actor?.system?.favorites?.length) {
-    const favorites = token.actor.system.favorites;
-
-    // Favorites use relative UUIDs
-    const itemByRelUuid = (fav) => items.find((i) => i.getRelativeUUID(token.actor) === fav.id);
-    const favItems = favorites.filter((fav) => fav.type === 'item')
-      .map(itemByRelUuid);
-    items = favItems;
-    log('Found favorites', favItems);
+  if (!selectedTokens.length) {
+    log('No tokens selected, cleaning up macros');
+    await destroyMacros();
+    return;
   }
 
-  // Filter to just usable items
-  items = items.filter(isItemAction);
-  log('Found items', items);
+  log(`Processing ${selectedTokens.length} selected token(s)`);
 
-  // Nothing to do.
-  if (!items.length) return;
+  // Collect all items from all selected tokens
+  const allItems = [];
+  for (const token of selectedTokens) {
+    if (!token.actor) continue;
+
+    log(`Processing token: ${token.name}`);
+    let items = Array.from(token.actor?.items?.values() ?? []);
+
+    // See if favorites are available
+    if (token.actor?.system?.favorites?.length) {
+      const favorites = token.actor.system.favorites;
+
+      // Favorites use relative UUIDs
+      const itemByRelUuid = (fav) => items.find((i) => i.getRelativeUUID(token.actor) === fav.id);
+      const favItems = favorites.filter((fav) => fav.type === 'item')
+        .map(itemByRelUuid);
+      items = favItems;
+      log('Found favorites', favItems.map(i => i?.name));
+    }
+
+    // Filter to just usable items
+    items = items.filter(isItemAction);
+    log('Found usable items', items.map(i => i?.name));
+    allItems.push(...items);
+  }
+
+  // Nothing to do if no items
+  if (!allItems.length) {
+    log('No usable items found');
+    await destroyMacros();
+    return;
+  }
+
+  // First, clean up existing macros
+  await destroyMacros();
 
   const hotbarPage = game.settings.get(MODULE_ID, SETTING_HOTBAR_PAGE);
   const freeSlots = game.user.getHotbarMacros(hotbarPage)
     .filter((sm) => !sm.macro)
     .map((sm) => sm.slot);
 
-  const macroData = items.slice(0, freeSlots.length)
+  const macroData = allItems.slice(0, freeSlots.length)
     .map(createMacroData);
+
+  if (!macroData.length) {
+    log('No free slots available');
+    return;
+  }
 
   const macros = await Macro.create(macroData);
 
@@ -121,20 +154,31 @@ const destroyMacros = async () => {
   await Macro.deleteDocuments(macroIds);
 };
 
-const tokenDeselected = async (token) => {
-  log(`Token ${token.name} deselected.`);
-  await destroyMacros();
+/**
+ * Debounced update function that batches rapid token selections.
+ * This prevents the macro bar from getting jumbled when selecting multiple tokens quickly.
+ */
+const scheduleUpdate = () => {
+  // Clear any existing timeout
+  if (updateTimeout) {
+    clearTimeout(updateTimeout);
+  }
+
+  // Schedule a new update after a short delay
+  updateTimeout = setTimeout(() => {
+    workQueue = workQueue.then(() => updateMacrosForSelectedTokens());
+    updateTimeout = null;
+  }, 100); // 100ms debounce delay
 };
 
 const controlTokenHook = async (token, selected) => {
   const onlyGms = game.settings.get(MODULE_ID, SETTING_ONLY_GMS);
   if (onlyGms && !game.user.isGM) return;
 
-  if (selected) {
-    workQueue = workQueue.then(() => tokenSelected(token));
-  } else {
-    workQueue = workQueue.then(() => tokenDeselected(token));
-  }
+  log(`Token ${token.name} ${selected ? 'selected' : 'deselected'}`);
+
+  // Schedule an update - this will be debounced if multiple tokens are selected quickly
+  scheduleUpdate();
 };
 
 const initHook = () => {
