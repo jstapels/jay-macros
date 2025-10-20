@@ -465,17 +465,20 @@ const renderHotbarHook = (app, html, data) => {
 
   log('renderHotbar hook triggered');
 
+  // Wrap html in jQuery (Foundry v13 uses ApplicationV2, which provides vanilla DOM)
+  const $html = $(html);
+
   // Remove any existing filter UI
-  html.find('#jay-macros-filters').remove();
+  $html.find('#jay-macros-filters').remove();
 
   // Build and inject new filter UI if we have items
   const filterHTML = buildFilterHTML();
   if (filterHTML) {
     log('Injecting filter UI into hotbar');
-    html.before(filterHTML);
+    $html.before(filterHTML);
 
     // Attach click handlers using jQuery
-    html.prev('#jay-macros-filters').find('.jay-macros-filter-button').on('click', function(event) {
+    $html.prev('#jay-macros-filters').find('.jay-macros-filter-button').on('click', function(event) {
       event.stopPropagation();
       event.preventDefault();
       const filterValue = $(this).data('filter');
@@ -485,7 +488,7 @@ const renderHotbarHook = (app, html, data) => {
     });
 
     // Prevent mouse events from propagating to canvas
-    html.prev('#jay-macros-filters').on('mousedown mouseup', function(event) {
+    $html.prev('#jay-macros-filters').on('mousedown mouseup', function(event) {
       event.stopPropagation();
     });
   }
