@@ -108,48 +108,6 @@ const filterItemsByType = (items, filter) => {
 };
 
 /**
- * Build the filter button HTML.
- * @returns {string} The HTML string for the filter UI
- */
-const buildFilterHTML = () => {
-  if (!collectedItems.length) {
-    return '';
-  }
-
-  // Define filter buttons
-  const filters = [
-    { id: null, label: 'All', icon: 'fas fa-list' },
-    { id: 'action', label: 'Actions', icon: 'fas fa-fist-raised' },
-    { id: 'bonus', label: 'Bonus', icon: 'fas fa-bolt' },
-    { id: 'reaction', label: 'Reactions', icon: 'fas fa-shield-alt' },
-    { id: 'spell', label: 'Spells', icon: 'fas fa-magic' },
-  ];
-
-  let buttonsHTML = '';
-
-  for (const filter of filters) {
-    const filteredItems = filterItemsByType(collectedItems, filter.id);
-    const count = filteredItems.length;
-    const isActive = currentFilter === filter.id;
-    const isDisabled = count === 0;
-
-    const activeClass = isActive ? ' active' : '';
-    const disabledClass = isDisabled ? ' disabled' : '';
-    const disabledAttr = isDisabled ? ' disabled' : '';
-    const countText = count > 0 ? ` <span class="count">(${count})</span>` : '';
-
-    buttonsHTML += `
-      <button class="jay-macros-filter-button${activeClass}${disabledClass}"
-              data-filter="${filter.id ?? 'all'}"${disabledAttr}>
-        <i class="${filter.icon}"></i> ${filter.label}${countText}
-      </button>
-    `;
-  }
-
-  return `<div id="jay-macros-filters" class="jay-macros-filter-container">${buttonsHTML}</div>`;
-};
-
-/**
  * Handle filter button click.
  * @param {string|null} filter the filter to apply
  */
@@ -172,7 +130,7 @@ const updateMacrosForFilter = async () => {
 
   if (!collectedItems.length) {
     log('No items to filter');
-    ui.hotbar.render();
+    updateFilterUI();
     return;
   }
 
@@ -182,7 +140,7 @@ const updateMacrosForFilter = async () => {
 
   if (!filteredItems.length) {
     log('No items match current filter');
-    ui.hotbar.render(); // Update UI to show active filter
+    updateFilterUI(); // Update UI to show active filter
     return;
   }
 
@@ -196,7 +154,7 @@ const updateMacrosForFilter = async () => {
 
   if (!macroData.length) {
     log('No free slots available');
-    ui.hotbar.render(); // Update UI to show active filter
+    updateFilterUI(); // Update UI to show active filter
     return;
   }
 
@@ -214,8 +172,8 @@ const updateMacrosForFilter = async () => {
   log('Updating hotbar');
   await game.user.update({ hotbar: update }, { diff: false, recursive: false, noHook: true });
 
-  // Trigger hotbar re-render to update filter UI
-  ui.hotbar.render();
+  // Update filter UI to reflect current state
+  updateFilterUI();
 };
 
 /**
@@ -230,7 +188,7 @@ const updateMacrosForSelectedTokens = async () => {
     collectedItems = [];
     currentFilter = null;
     await destroyMacros();
-    ui.hotbar.render();
+    updateFilterUI();
     return;
   }
 
@@ -270,7 +228,7 @@ const updateMacrosForSelectedTokens = async () => {
     log('No usable items found');
     currentFilter = null;
     await destroyMacros();
-    ui.hotbar.render();
+    updateFilterUI();
     return;
   }
 
@@ -452,56 +410,110 @@ const initHook = () => {
 const readyHook = () => {
   log('Ready');
   Hooks.on('controlToken', controlTokenHook);
-  Hooks.on('renderHotbar', renderHotbarHook);
+
+  // Create persistent filter UI container
+  if (game.settings.get(MODULE_ID, SETTING_EXPERIMENTAL_FILTERS)) {
+    createFilterContainer();
+  }
 };
 
 /**
- * Hook for when the hotbar renders - inject filter UI.
+ * Create the persistent filter UI container and insert it into the DOM.
  */
-const renderHotbarHook = (app, html, data) => {
-  if (!game.settings.get(MODULE_ID, SETTING_EXPERIMENTAL_FILTERS)) {
+const createFilterContainer = () => {
+  log('Creating persistent filter container');
+
+  // Create container element
+  const container = document.createElement('div');
+  container.id = 'jay-macros-filters';
+  container.className = 'jay-macros-filter-container';
+  container.style.display = 'none'; // Hidden by default
+
+  // Find the hotbar element and insert our container before it
+  const hotbar = document.getElementById('hotbar');
+  if (hotbar && hotbar.parentElement) {
+    hotbar.parentElement.insertBefore(container, hotbar);
+    log('Filter container inserted into DOM');
+
+    // Prevent mouse events from propagating to canvas
+    container.addEventListener('mousedown', (event) => {
+      event.stopPropagation();
+    });
+    container.addEventListener('mouseup', (event) => {
+      event.stopPropagation();
+    });
+    container.addEventListener('click', (event) => {
+      event.stopPropagation();
+    });
+  } else {
+    log('ERROR: Could not find hotbar element');
+  }
+};
+
+/**
+ * Update the filter UI with current items.
+ */
+const updateFilterUI = () => {
+  const container = document.getElementById('jay-macros-filters');
+  if (!container) {
+    log('Filter container not found');
     return;
   }
 
-  log('renderHotbar hook triggered');
-
-  // Remove any existing filter UI
-  const existingFilter = html.querySelector('#jay-macros-filters');
-  if (existingFilter) {
-    existingFilter.remove();
+  if (!collectedItems.length) {
+    log('No items, hiding filter UI');
+    container.style.display = 'none';
+    container.innerHTML = '';
+    return;
   }
 
-  // Build and inject new filter UI if we have items
-  const filterHTML = buildFilterHTML();
-  if (filterHTML) {
-    log('Injecting filter UI into hotbar');
-    html.insertAdjacentHTML('beforebegin', filterHTML);
+  log(`Updating filter UI for ${collectedItems.length} items`);
 
-    // Get the newly inserted filter container
-    const filterContainer = html.previousElementSibling;
-    if (filterContainer && filterContainer.id === 'jay-macros-filters') {
-      // Attach click handlers to all filter buttons
-      const buttons = filterContainer.querySelectorAll('.jay-macros-filter-button');
-      buttons.forEach(button => {
-        button.addEventListener('click', (event) => {
-          event.stopPropagation();
-          event.preventDefault();
-          const filterValue = event.currentTarget.dataset.filter;
-          const filter = filterValue === 'all' ? null : filterValue;
-          log(`Filter button clicked: ${filter ?? 'all'}`);
-          handleFilterClick(filter);
-        });
-      });
+  // Define filter buttons
+  const filters = [
+    { id: null, label: 'All', icon: 'fas fa-list' },
+    { id: 'action', label: 'Actions', icon: 'fas fa-fist-raised' },
+    { id: 'bonus', label: 'Bonus', icon: 'fas fa-bolt' },
+    { id: 'reaction', label: 'Reactions', icon: 'fas fa-shield-alt' },
+    { id: 'spell', label: 'Spells', icon: 'fas fa-magic' },
+  ];
 
-      // Prevent mouse events from propagating to canvas
-      filterContainer.addEventListener('mousedown', (event) => {
-        event.stopPropagation();
-      });
-      filterContainer.addEventListener('mouseup', (event) => {
-        event.stopPropagation();
-      });
-    }
+  let buttonsHTML = '';
+
+  for (const filter of filters) {
+    const filteredItems = filterItemsByType(collectedItems, filter.id);
+    const count = filteredItems.length;
+    const isActive = currentFilter === filter.id;
+    const isDisabled = count === 0;
+
+    const activeClass = isActive ? ' active' : '';
+    const disabledClass = isDisabled ? ' disabled' : '';
+    const disabledAttr = isDisabled ? ' disabled' : '';
+    const countText = count > 0 ? ` <span class="count">(${count})</span>` : '';
+
+    buttonsHTML += `
+      <button class="jay-macros-filter-button${activeClass}${disabledClass}"
+              data-filter="${filter.id ?? 'all'}"${disabledAttr}>
+        <i class="${filter.icon}"></i> ${filter.label}${countText}
+      </button>
+    `;
   }
+
+  container.innerHTML = buttonsHTML;
+  container.style.display = 'flex';
+
+  // Attach click handlers to all buttons
+  const buttons = container.querySelectorAll('.jay-macros-filter-button');
+  buttons.forEach(button => {
+    button.addEventListener('click', (event) => {
+      event.stopPropagation();
+      event.preventDefault();
+      const filterValue = event.currentTarget.dataset.filter;
+      const filter = filterValue === 'all' ? null : filterValue;
+      log(`Filter button clicked: ${filter ?? 'all'}`);
+      handleFilterClick(filter);
+    });
+  });
 };
 
 Hooks.once('init', initHook);

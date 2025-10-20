@@ -12,8 +12,8 @@
   align-items: center;
   flex-wrap: nowrap;
   position: relative;
-  z-index: 100;
-  pointer-events: auto;
+  z-index: 1000;
+  pointer-events: all;
   user-select: none;
 }
 
