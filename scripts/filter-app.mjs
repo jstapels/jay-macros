@@ -1,9 +1,11 @@
 const MODULE_ID = 'jay-macros';
 
 /**
- * Application for the filter UI buttons (V2Application)
+ * Application for the filter UI buttons (V2Application with Handlebars)
  */
-export class FilterApplication extends foundry.applications.api.ApplicationV2 {
+export class FilterApplication extends foundry.applications.api.HandlebarsApplicationMixin(
+  foundry.applications.api.ApplicationV2
+) {
   constructor(options = {}) {
     super(options);
     this.collectedItems = [];
