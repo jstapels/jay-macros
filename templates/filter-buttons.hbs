@@ -1,4 +1,4 @@
-{{#if hasItems}}
+<div class="jay-macros-filter-wrapper" style="{{#unless hasItems}}display:none;{{/unless}}">
   {{#each buttons}}
     <button class="jay-macros-filter-button {{#if isActive}}active{{/if}} {{#if isDisabled}}disabled{{/if}}"
             data-filter="{{filterId}}"
@@ -9,4 +9,4 @@
       {{/if}}
     </button>
   {{/each}}
-{{/if}}
+</div>
