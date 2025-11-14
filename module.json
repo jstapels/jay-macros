@@ -22,9 +22,6 @@
   "esmodules": [
     "scripts/main.mjs"
   ],
-  "styles": [
-    "styles/jay-macros.css"
-  ],
   "languages": [
     {
       "lang": "en",
