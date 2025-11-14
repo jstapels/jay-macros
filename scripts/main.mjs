@@ -1,4 +1,6 @@
-const MODULE_ID = 'jay-macros';
+export const MODULE_ID = 'jay-macros';
+
+import { FilterApplication } from './filter-app.mjs';
 
 // Setting keys
 const SETTING_HOTBAR_PAGE = 'hotbarPage';
@@ -9,6 +11,7 @@ const SETTING_ACTIVATION_REACTION = 'reaction';
 const SETTING_ACTIVATION_SPECIAL = 'special';
 const SETTING_ACTIVATION_NONE = 'none';
 const SETTING_ACTIVATION_EMPTY = 'empty';
+const SETTING_EXPERIMENTAL_FILTERS = 'experimentalFilters';
 
 const ACTION_LOOKUP = new Map([
   [SETTING_ACTIVATION_ACTION, 'action'],
@@ -20,6 +23,9 @@ const ACTION_LOOKUP = new Map([
 
 let workQueue = Promise.resolve();
 let updateTimeout = null;
+let currentFilter = null; // Track the currently active filter
+let collectedItems = []; // Store items from selected tokens for filtering
+let filterApp = null; // FilterApplication instance
 
 /**
  * Log to the console.
@@ -65,6 +71,97 @@ const createMacroData = (item) => {
 };
 
 /**
+ * Get the activation type of an item.
+ * @param {Item} item the item to check
+ * @returns {string|null} the activation type (action, bonus, reaction, special, none) or null
+ */
+const getItemActivationType = (item) => {
+  if (!item?.system?.activities?.size) {
+    return 'empty';
+  }
+
+  // Get the first activity's activation type
+  const firstActivity = item.system.activities.values().next().value;
+  return firstActivity?.activation?.type ?? 'none';
+};
+
+/**
+ * Check if an item is a spell.
+ * @param {Item} item the item to check
+ * @returns {boolean} true if the item is a spell
+ */
+const isSpell = (item) => {
+  return item?.type === 'spell';
+};
+
+/**
+ * Filter items based on the current filter.
+ * @param {Array} items the items to filter
+ * @param {string} filter the filter type (action, bonus, reaction, spell, or null for all)
+ * @returns {Array} the filtered items
+ */
+const filterItemsByType = (items, filter) => {
+  if (!filter) return items;
+
+  if (filter === 'spell') {
+    return items.filter(isSpell);
+  }
+
+  return items.filter(item => getItemActivationType(item) === filter);
+};
+
+
+/**
+ * Update macros based on the current filter.
+ */
+const updateMacrosForFilter = async () => {
+  // First, clean up existing macros
+  await destroyMacros();
+
+  if (!collectedItems.length) {
+    log('No items to filter');
+    if (filterApp) filterApp.updateItems([]);
+    return;
+  }
+
+  // Apply filter to collected items
+  const filteredItems = filterItemsByType(collectedItems, currentFilter);
+  log(`Filtered to ${filteredItems.length} items (filter: ${currentFilter ?? 'all'})`);
+
+  if (!filteredItems.length) {
+    log('No items match current filter');
+    return;
+  }
+
+  const hotbarPage = game.settings.get(MODULE_ID, SETTING_HOTBAR_PAGE);
+  const freeSlots = game.user.getHotbarMacros(hotbarPage)
+    .filter((sm) => !sm.macro)
+    .map((sm) => sm.slot);
+
+  const macroData = filteredItems.slice(0, freeSlots.length)
+    .map(createMacroData);
+
+  if (!macroData.length) {
+    log('No free slots available');
+    return;
+  }
+
+  const macros = await Macro.create(macroData);
+
+  // Update the hotbar in bulk.
+  const update = foundry.utils.deepClone(game.user.hotbar);
+
+  for (const macro of macros) {
+    const slot = freeSlots.shift();
+    log(`Assigning ${macro.name} to hotbar slot ${slot}`);
+    update[slot] = macro.id;
+  }
+
+  log('Updating hotbar');
+  await game.user.update({ hotbar: update }, { diff: false, recursive: false, noHook: true });
+};
+
+/**
  * Process all currently selected tokens and update the macro bar.
  * This handles multiple selected tokens at once to avoid timing conflicts.
  */
@@ -73,7 +170,10 @@ const updateMacrosForSelectedTokens = async () => {
 
   if (!selectedTokens.length) {
     log('No tokens selected, cleaning up macros');
+    collectedItems = [];
+    currentFilter = null;
     await destroyMacros();
+    if (filterApp) filterApp.updateItems([]);
     return;
   }
 
@@ -105,12 +205,28 @@ const updateMacrosForSelectedTokens = async () => {
     allItems.push(...items);
   }
 
+  // Store items for filtering
+  collectedItems = allItems;
+
   // Nothing to do if no items
   if (!allItems.length) {
     log('No usable items found');
+    currentFilter = null;
     await destroyMacros();
+    if (filterApp) filterApp.updateItems([]);
     return;
   }
+
+  // If experimental filters are enabled, create UI and use filter logic
+  if (game.settings.get(MODULE_ID, SETTING_EXPERIMENTAL_FILTERS)) {
+    log('Using experimental filter mode');
+    if (filterApp) filterApp.updateItems(allItems);
+    await updateMacrosForFilter();
+    return;
+  }
+
+  // Otherwise, use original logic (no filtering)
+  currentFilter = null;
 
   // First, clean up existing macros
   await destroyMacros();
@@ -263,6 +379,15 @@ const initHook = () => {
     type: Boolean,
     default: false,
   });
+  game.settings.register(MODULE_ID, SETTING_EXPERIMENTAL_FILTERS, {
+    name: game.i18n.localize(`${MODULE_ID}.settings.experimentalFilters.name`),
+    hint: game.i18n.localize(`${MODULE_ID}.settings.experimentalFilters.hint`),
+    scope: 'world',
+    config: true,
+    requiresReload: true,
+    type: Boolean,
+    default: false,
+  });
 };
 
 /**
@@ -271,7 +396,21 @@ const initHook = () => {
 const readyHook = () => {
   log('Ready');
   Hooks.on('controlToken', controlTokenHook);
+
+  // Create filter application
+  if (game.settings.get(MODULE_ID, SETTING_EXPERIMENTAL_FILTERS)) {
+    log('Creating FilterApplication');
+    filterApp = new FilterApplication({
+      onFilterChange: async (filter) => {
+        currentFilter = filter;
+        await updateMacrosForFilter();
+      }
+    });
+    filterApp.render(true);
+    log('FilterApplication rendered');
+  }
 };
+
 
 Hooks.once('init', initHook);
 Hooks.once('ready', readyHook);
